@@ -1,0 +1,56 @@
+﻿namespace Immutability
+{
+    using System;
+    using System.Collections;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Text;
+    using System.Threading.Tasks;
+
+    public sealed class Stack<T> : IStack<T>
+    {
+        private sealed class EmptyStack : IStack<T>
+        {
+            public bool IsEmpty { get { return true; } }
+            public T Peek() { throw new Exception("Empty stack"); }
+            public IStack<T> Push(T value) { return new Stack<T>(value, this); }
+            public IStack<T> Pop() { throw new Exception("Empty stack"); }
+            public IEnumerator<T> GetEnumerator() { yield break; }
+            IEnumerator IEnumerable.GetEnumerator() { return this.GetEnumerator(); }
+        }
+
+        private static readonly EmptyStack empty = new EmptyStack();
+        public static IStack<T> Empty { get { return empty; } }
+        private readonly T head;
+        private readonly IStack<T> tail;
+        private Stack(T head, IStack<T> tail)
+        {
+            this.head = head;
+            this.tail = tail;
+        }
+
+        public bool IsEmpty { get { return false; } }
+        public T Peek() { return head; }
+        public IStack<T> Pop() { return tail; }
+        public IStack<T> Push(T value) { return new Stack<T>(value, this); }
+
+        public IEnumerator<T> GetEnumerator()
+        {
+            for (IStack<T> stack = this; !stack.IsEmpty; stack = stack.Pop())
+                yield return stack.Peek();
+        }
+
+        IEnumerator IEnumerable.GetEnumerator() { return this.GetEnumerator(); }
+    }
+
+    public static class MyExtensions
+    {
+        static public IStack<T> Reverse<T>(this IStack<T> stack)
+        {
+            IStack<T> r = Stack<T>.Empty;
+            for (IStack<T> f = stack; !f.IsEmpty; f = f.Pop())
+                r = r.Push(f.Peek());
+            return r;
+        }
+    }
+}
